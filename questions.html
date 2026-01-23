@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Ask an Expert - SmartKrishi</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/@phosphor-icons/web"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+const supabaseUrl = "https://befmtxcrblgtmsvwjieh.supabase.co";
+const supabaseKey = "sb_publishable_Or_PZwo-9lO--5PIHhmvwA_omV5Sg0O";
+const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+</script>
+
+<style>
+.spinner{width:24px;height:24px;border:3px solid rgba(255,255,255,.4);border-top:3px solid #fff;border-radius:50%;animation:spin 1s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+
+<body class="bg-gray-100 flex justify-center">
+<div class="w-full max-w-sm h-screen bg-gray-50 flex flex-col">
+
+<nav class="bg-white shadow p-4">
+<h1 class="text-xl font-bold text-green-700">Ask an Expert</h1>
+</nav>
+
+<main id="history" class="flex-grow overflow-y-auto p-4 space-y-4"></main>
+
+<form id="questionForm" class="p-3 bg-white border-t flex gap-2">
+<input type="file" id="imageInput" hidden>
+<button type="button" onclick="imageInput.click()" class="p-2 border rounded"><i class="ph ph-camera"></i></button>
+<input id="questionInput" class="flex-grow p-2 border rounded" placeholder="Ask your question...">
+<button class="bg-green-600 text-white p-3 rounded"><i class="ph ph-paper-plane-right"></i></button>
+</form>
+
+</div>
+
+<script>
+let userId = localStorage.getItem("user_id");
+if(!userId){
+  userId = crypto.randomUUID();
+  localStorage.setItem("user_id", userId);
+}
+
+async function uploadImage(file){
+  const path = "questions/" + crypto.randomUUID() + ".jpg";
+  await supabase.storage.from("uploads").upload(path, file);
+  const {data} = supabase.storage.from("uploads").getPublicUrl(path);
+  return data.publicUrl;
+}
+
+async function loadHistory(){
+  const {data} = await supabase
+    .from("questions")
+    .select("*")
+    .eq("user_id", userId)
+    .order("created_at",{ascending:false});
+
+  history.innerHTML="";
+  data?.forEach(q=>{
+    history.innerHTML += `
+      <div class="bg-white p-3 rounded shadow">
+        ${q.image ? `<img src="${q.image}" class="w-full h-40 object-cover rounded mb-2">`:""}
+        <p class="font-semibold">${q.question}</p>
+        <p class="text-sm text-gray-500">${new Date(q.created_at).toLocaleString()}</p>
+      </div>
+    `;
+  });
+}
+
+questionForm.onsubmit = async e=>{
+  e.preventDefault();
+  let imgUrl=null;
+
+  if(imageInput.files[0]){
+    imgUrl = await uploadImage(imageInput.files[0]);
+    imageInput.value="";
+  }
+
+  const text = questionInput.value;
+  questionInput.value="";
+
+  await supabase.from("questions").insert({
+    user_id:userId,
+    question:text,
+    image:imgUrl,
+    created_at:new Date()
+  });
+
+  loadHistory();
+}
+
+loadHistory();
+</script>
+
+</body>
+</html>

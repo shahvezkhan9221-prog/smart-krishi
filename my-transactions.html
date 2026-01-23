@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>My Transactions - SmartKrishi</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+const supabase = supabase.createClient(
+  "https://befmtxcrblgtmsvwjieh.supabase.co",
+  "sb_publishable_Or_PZwo-9lO--5PIHhmvwA_omV5Sg0O"
+);
+</script>
+</head>
+
+<body class="bg-gray-100 flex justify-center">
+<div class="w-full max-w-sm h-screen bg-white p-4 overflow-y-auto">
+
+<h2 class="text-xl font-bold text-green-700 mb-4">My Transactions</h2>
+
+<div id="transactions"></div>
+
+</div>
+
+<script>
+let userId = localStorage.getItem("user_id");
+
+async function loadTransactions(){
+  const {data} = await supabase
+    .from("transactions")
+    .select("*")
+    .eq("user_id", userId)
+    .order("created_at",{ascending:false});
+
+  const div = document.getElementById("transactions");
+  div.innerHTML="";
+
+  if(!data || data.length===0){
+    div.innerHTML="<p class='text-gray-500'>No transactions yet</p>";
+    return;
+  }
+
+  data.forEach(t=>{
+    div.innerHTML += `
+      <div class="flex justify-between p-3 border-b">
+        <div>
+          <p class="font-semibold">${t.title}</p>
+          <p class="text-xs text-gray-500">${new Date(t.created_at).toLocaleString()}</p>
+        </div>
+        <p class="${t.type==='credit'?'text-green-600':'text-red-600'} font-bold">
+          ${t.type==='credit'?'+':'-'}₹${t.amount}
+        </p>
+      </div>
+    `;
+  });
+}
+
+loadTransactions();
+</script>
+
+</body>
+</html>

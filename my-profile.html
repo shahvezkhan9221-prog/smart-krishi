@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Edit Profile - SmartKrishi</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/@phosphor-icons/web"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+const supabaseUrl = "https://befmtxcrblgtmsvwjieh.supabase.co";
+const supabaseKey = "sb_publishable_Or_PZwo-9lO--5PIHhmvwA_omV5Sg0O";
+const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+</script>
+
+<style>
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(22,163,74,.2);
+  border-top: 4px solid #16a34a;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+input[type=file]{display:none;}
+</style>
+</head>
+
+<body class="bg-gray-100 flex justify-center">
+<div class="w-full max-w-sm h-screen bg-gray-100 flex flex-col">
+
+<nav class="bg-white shadow p-4 flex items-center">
+<a href="menu.html"><i class="ph ph-arrow-left text-2xl text-gray-600"></i></a>
+<h1 class="ml-4 text-xl font-bold text-green-700">Edit Profile</h1>
+</nav>
+
+<main class="flex-grow overflow-y-auto p-4">
+
+<div id="loading" class="text-center p-10">
+<div class="loading-spinner mx-auto"></div>
+</div>
+
+<form id="profileForm" class="hidden space-y-4">
+
+<div class="flex flex-col items-center space-y-2">
+<img id="avatar" class="w-24 h-24 rounded-full border-4 border-green-200 object-cover">
+<label class="text-green-600 cursor-pointer">
+Change Picture
+<input type="file" id="photoInput" accept="image/*">
+</label>
+</div>
+
+<div class="bg-white p-4 rounded-xl space-y-3">
+<input id="name" class="w-full p-3 border rounded" placeholder="Full Name">
+<input id="email" class="w-full p-3 border rounded bg-gray-100" readonly>
+<input id="phone" class="w-full p-3 border rounded" placeholder="Phone">
+<input id="land" class="w-full p-3 border rounded" placeholder="Land (acres)">
+<input id="state" class="w-full p-3 border rounded" placeholder="State">
+<input id="district" class="w-full p-3 border rounded" placeholder="District">
+<input id="block" class="w-full p-3 border rounded" placeholder="Block">
+<input id="village" class="w-full p-3 border rounded" placeholder="Village">
+</div>
+
+<button class="w-full bg-green-600 text-white py-3 rounded-lg font-bold">Save Profile</button>
+</form>
+
+</main>
+</div>
+
+<script>
+let userId = localStorage.getItem("user_id");
+if(!userId){
+  userId = crypto.randomUUID();
+  localStorage.setItem("user_id", userId);
+}
+
+async function loadProfile(){
+  const {data} = await supabase.from("profiles").select("*").eq("id", userId).single();
+  if(data){
+    avatar.src = data.photo || "https://via.placeholder.com/150";
+    name.value = data.name || "";
+    email.value = data.email || "";
+    phone.value = data.phone || "";
+    land.value = data.land || "";
+    state.value = data.state || "";
+    district.value = data.district || "";
+    block.value = data.block || "";
+    village.value = data.village || "";
+  } else {
+    avatar.src = "https://via.placeholder.com/150";
+  }
+  loading.style.display="none";
+  profileForm.classList.remove("hidden");
+}
+
+async function uploadPhoto(file){
+  const path = "profiles/" + userId + ".jpg";
+  await supabase.storage.from("uploads").upload(path, file, { upsert:true });
+  const {data} = supabase.storage.from("uploads").getPublicUrl(path);
+  return data.publicUrl;
+}
+
+photoInput.onchange = async e => {
+  const file = e.target.files[0];
+  const url = await uploadPhoto(file);
+  avatar.src = url;
+}
+
+profileForm.onsubmit = async e => {
+  e.preventDefault();
+
+  await supabase.from("profiles").upsert({
+    id: userId,
+    name: name.value,
+    email: email.value,
+    phone: phone.value,
+    land: land.value,
+    state: state.value,
+    district: district.value,
+    block: block.value,
+    village: village.value,
+    photo: avatar.src
+  });
+
+  alert("Profile saved");
+}
+
+loadProfile();
+</script>
+
+</body>
+</html>

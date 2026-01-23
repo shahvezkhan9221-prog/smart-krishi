@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Create Listing - SmartKrishi</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+const supabase = supabase.createClient(
+  "https://befmtxcrblgtmsvwjieh.supabase.co",
+  "sb_publishable_Or_PZwo-9lO--5PIHhmvwA_omV5Sg0O"
+);
+</script>
+</head>
+
+<body class="bg-gray-100 flex justify-center">
+<div class="w-full max-w-sm h-screen bg-white p-4">
+
+<h2 class="text-xl font-bold text-green-700 mb-4">Add Crop Listing</h2>
+
+<input type="file" id="imageInput" class="mb-3">
+<input id="crop" class="w-full p-3 border rounded mb-2" placeholder="Crop name">
+<input id="price" type="number" class="w-full p-3 border rounded mb-2" placeholder="Price per quintal">
+<input id="quantity" type="number" class="w-full p-3 border rounded mb-4" placeholder="Quantity">
+
+<button onclick="saveListing()" class="w-full bg-green-600 text-white p-3 rounded">Post Listing</button>
+
+</div>
+
+<script>
+let userId = localStorage.getItem("user_id");
+if(!userId){
+  userId = crypto.randomUUID();
+  localStorage.setItem("user_id", userId);
+}
+
+async function uploadImage(file){
+  const path = "listings/" + crypto.randomUUID() + ".jpg";
+  await supabase.storage.from("uploads").upload(path, file);
+  const {data} = supabase.storage.from("uploads").getPublicUrl(path);
+  return data.publicUrl;
+}
+
+async function saveListing(){
+  const file = imageInput.files[0];
+  const cropVal = crop.value;
+  const priceVal = price.value;
+  const qtyVal = quantity.value;
+
+  if(!file || !cropVal || !priceVal || !qtyVal){
+    alert("Fill all fields");
+    return;
+  }
+
+  const img = await uploadImage(file);
+
+  await supabase.from("listings").insert({
+    user_id: userId,
+    crop: cropVal,
+    price: priceVal,
+    quantity: qtyVal,
+    image: img,
+    created_at: new Date()
+  });
+
+  alert("Listing created!");
+  location.href = "my-listings.html";
+}
+</script>
+
+</body>
+</html>

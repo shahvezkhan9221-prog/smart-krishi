@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Nearby Services - SmartKrishi</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+<style>
+#map { height: 100%; width: 100%; }
+</style>
+</head>
+
+<body class="bg-gray-100 flex justify-center">
+<div class="w-full max-w-sm h-screen bg-gray-50 flex flex-col">
+
+<nav class="bg-white shadow p-4 flex items-center">
+  <a href="index.html"><i class="ph ph-arrow-left text-2xl"></i></a>
+  <h1 class="ml-4 text-xl font-bold text-green-700">Nearby Services</h1>
+</nav>
+
+<div id="map" class="flex-grow"></div>
+
+</div>
+
+<script>
+function initMap(lat, lng){
+  const map = new google.maps.Map(document.getElementById("map"), {
+    center:{lat,lng},
+    zoom:13
+  });
+
+  const types = ["fertilizer","tractor","warehouse","seed","mandi"];
+
+  types.forEach(t=>{
+    new google.maps.places.PlacesService(map).nearbySearch({
+      location:{lat,lng},
+      radius:5000,
+      keyword:t
+    }, (res)=>{
+      res?.forEach(p=>{
+        new google.maps.Marker({
+          map,
+          position:p.geometry.location,
+          title:p.name
+        });
+      });
+    });
+  });
+}
+
+navigator.geolocation.getCurrentPosition(pos=>{
+  initMap(pos.coords.latitude,pos.coords.longitude);
+});
+</script>
+
+<script src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_KEY&libraries=places"></script>
+
+</body>
+</html>

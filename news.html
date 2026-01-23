@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Agri News - SmartKrishi</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+</head>
+
+<body class="bg-gray-100 flex justify-center">
+<div class="w-full max-w-sm h-screen bg-gray-50 flex flex-col">
+
+<nav class="bg-white shadow p-4 flex items-center">
+  <a href="index.html"><i class="ph ph-arrow-left text-2xl text-gray-600"></i></a>
+  <h1 class="ml-4 text-xl font-bold text-green-700">Agri News</h1>
+</nav>
+
+<main id="newsContainer" class="flex-grow overflow-y-auto p-4 space-y-4">
+  <p class="text-gray-500 text-center">Loading latest news…</p>
+</main>
+
+</div>
+
+<script>
+async function loadNews(){
+  const res = await fetch("https://api.worldnewsapi.com/search-news?text=agriculture&language=en&api-key=demo");
+  const json = await res.json();
+
+  const container = document.getElementById("newsContainer");
+  container.innerHTML = "";
+
+  json.news?.forEach(n=>{
+    container.innerHTML += `
+      <div class="bg-white rounded shadow overflow-hidden">
+        <img src="${n.image || 'https://via.placeholder.com/300'}" class="w-full h-40 object-cover">
+        <div class="p-3">
+          <h3 class="font-bold">${n.title}</h3>
+          <p class="text-sm text-gray-600 mt-1">${n.text.substring(0,120)}...</p>
+          <a href="${n.url}" target="_blank" class="text-green-600 text-sm">Read more</a>
+        </div>
+      </div>
+    `;
+  });
+}
+
+loadNews();
+</script>
+
+</body>
+</html>

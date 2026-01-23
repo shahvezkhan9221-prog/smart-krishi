@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>My Bookings - SmartKrishi</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+const supabase = supabase.createClient(
+  "https://befmtxcrblgtmsvwjieh.supabase.co",
+  "sb_publishable_Or_PZwo-9lO--5PIHhmvwA_omV5Sg0O"
+);
+</script>
+</head>
+
+<body class="bg-gray-100 flex justify-center">
+<div class="w-full max-w-sm h-screen bg-white p-4 overflow-y-auto">
+
+<h2 class="text-xl font-bold text-green-700 mb-4">My Logistics Bookings</h2>
+
+<div id="bookingList" class="space-y-3"></div>
+
+<button onclick="newBooking()" class="fixed bottom-6 right-6 bg-green-600 text-white p-4 rounded-full">
++
+</button>
+
+</div>
+
+<script>
+let userId = localStorage.getItem("user_id");
+
+async function loadBookings(){
+  const {data} = await supabase
+    .from("bookings")
+    .select("*")
+    .eq("user_id", userId)
+    .order("created_at",{ascending:false});
+
+  bookingList.innerHTML="";
+
+  if(!data || data.length===0){
+    bookingList.innerHTML="<p class='text-gray-500'>No bookings yet</p>";
+    return;
+  }
+
+  data.forEach(b=>{
+    bookingList.innerHTML += `
+      <div class="border p-3 rounded bg-white shadow">
+        <p><b>${b.from_location}</b> → <b>${b.to_location}</b></p>
+        <p class="text-sm text-gray-600">Date: ${b.date}</p>
+        <p class="text-sm">Status: <span class="font-semibold">${b.status}</span></p>
+      </div>
+    `;
+  });
+}
+
+async function newBooking(){
+  const from = prompt("From location?");
+  const to = prompt("To location?");
+  const date = prompt("Date (YYYY-MM-DD)");
+
+  await supabase.from("bookings").insert({
+    user_id:userId,
+    from_location:from,
+    to_location:to,
+    date,
+    status:"Pending",
+    created_at:new Date()
+  });
+
+  loadBookings();
+}
+
+loadBookings();
+</script>
+
+</body>
+</html>

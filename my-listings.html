@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>My Listings - SmartKrishi</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+const supabase = supabase.createClient(
+  "https://befmtxcrblgtmsvwjieh.supabase.co",
+  "sb_publishable_Or_PZwo-9lO--5PIHhmvwA_omV5Sg0O"
+);
+</script>
+</head>
+
+<body class="bg-gray-100 flex justify-center">
+<div class="w-full max-w-sm h-screen bg-white p-4 overflow-y-auto">
+
+<h2 class="text-xl font-bold text-green-700 mb-4">My Crop Listings</h2>
+
+<div id="listings" class="space-y-4"></div>
+
+</div>
+
+<script>
+let userId = localStorage.getItem("user_id");
+if(!userId){
+  alert("Not logged in");
+}
+
+async function loadListings(){
+  const {data} = await supabase
+    .from("listings")
+    .select("*")
+    .eq("user_id", userId)
+    .order("created_at",{ascending:false});
+
+  listings.innerHTML = "";
+
+  if(!data || data.length===0){
+    listings.innerHTML = "<p class='text-gray-500'>No listings yet.</p>";
+    return;
+  }
+
+  data.forEach(item=>{
+    listings.innerHTML += `
+      <div class="bg-white border rounded-lg shadow p-3">
+        <img src="${item.image}" class="w-full h-40 object-cover rounded mb-2">
+        <h3 class="text-lg font-bold">${item.crop}</h3>
+        <p class="text-gray-600">Price: ₹${item.price}</p>
+        <p class="text-gray-600">Quantity: ${item.quantity}</p>
+        <p class="text-xs text-gray-400">${new Date(item.created_at).toLocaleString()}</p>
+      </div>
+    `;
+  });
+}
+
+loadListings();
+</script>
+
+</body>
+</html>

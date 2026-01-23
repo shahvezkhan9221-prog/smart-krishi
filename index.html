@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>SmartKrishi Feed</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+const supabase = supabase.createClient(
+  "https://befmtxcrblgtmsvwjieh.supabase.co",
+  "sb_publishable_Or_PZwo-9lO--5PIHhmvwA_omV5Sg0O"
+);
+</script>
+</head>
+
+<body class="bg-gray-100 flex justify-center">
+<div class="w-full max-w-sm h-screen bg-white flex flex-col">
+
+<header class="bg-green-600 text-white p-4 text-xl font-bold">SmartKrishi</header>
+
+<div class="p-3 border-b flex gap-2">
+  <input id="textInput" class="flex-grow p-2 border rounded" placeholder="Share something...">
+  <input type="file" id="mediaInput">
+  <button onclick="post()" class="bg-green-600 text-white p-2 rounded">Post</button>
+</div>
+
+<main id="feed" class="flex-grow overflow-y-auto p-3 space-y-4"></main>
+
+</div>
+
+<script>
+let userId = localStorage.getItem("user_id");
+if(!userId){
+  userId = crypto.randomUUID();
+  localStorage.setItem("user_id", userId);
+}
+
+async function uploadMedia(file){
+  const path = "feed/" + crypto.randomUUID();
+  await supabase.storage.from("uploads").upload(path, file);
+  const {data} = supabase.storage.from("uploads").getPublicUrl(path);
+  return data.publicUrl;
+}
+
+async function post(){
+  let mediaUrl = null;
+  if(mediaInput.files[0]){
+    mediaUrl = await uploadMedia(mediaInput.files[0]);
+  }
+
+  await supabase.from("feed").insert({
+    user_id: userId,
+    text: textInput.value,
+    media: mediaUrl,
+    created_at: new Date()
+  });
+
+  textInput.value="";
+  mediaInput.value="";
+  loadFeed();
+}
+
+async function loadFeed(){
+  const {data} = await supabase
+    .from("feed")
+    .select("*")
+    .order("created_at",{ascending:false});
+
+  feed.innerHTML="";
+  data?.forEach(p=>{
+    feed.innerHTML += `
+      <div class="bg-white border rounded p-3">
+        ${p.media?`<img src="${p.media}" class="w-full rounded mb-2">`:""}
+        <p>${p.text}</p>
+        <p class="text-xs text-gray-400">${new Date(p.created_at).toLocaleString()}</p>
+      </div>
+    `;
+  });
+}
+
+loadFeed();
+</script>
+
+</body>
+</html>
